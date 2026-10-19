@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>I3I / DDS Texture Viewer V9 - BMP 8-bit</title>
+<style>
+:root{--bg:#101114;--card:#1a1c21;--card2:#22252c;--line:#30343d;--text:#f5f5f5;--muted:#aeb4bf;--blue:#2d8cff;--green:#19a957}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif;font-size:14px}
+body{padding-bottom:20px}
+header{position:sticky;top:0;z-index:10;background:rgba(16,17,20,.97);border-bottom:1px solid var(--line);padding:12px}
+h1{font-size:18px;margin:0 0 3px}.sub{font-size:11px;color:var(--muted)}
+.topBtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+button,.fileBtn{min-height:44px;border:0;border-radius:9px;padding:10px 12px;background:var(--blue);color:#fff;font-weight:bold;text-align:center;font-size:14px}
+button.secondary{background:#414650}.green{background:var(--green)!important}
+input[type=file]{display:none}
+#drop{margin:10px 12px;padding:18px 12px;border:2px dashed #4a5260;border-radius:10px;text-align:center;color:var(--muted);background:#15171b}
+details{margin-top:9px;background:var(--card);border:1px solid var(--line);border-radius:9px;overflow:hidden}
+summary{padding:12px;font-weight:bold;cursor:pointer;list-style:none}summary::-webkit-details-marker{display:none}
+summary:after{content:'＋';float:right;color:var(--muted)}details[open] summary:after{content:'−'}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 9px 10px}
+.ctrl{background:var(--card2);border-radius:8px;padding:9px;min-width:0;font-size:12px;display:block}
+.ctrl.full{grid-column:1/-1}
+.ctrl input[type=range]{width:100%;margin-top:7px;accent-color:var(--blue)}
+.ctrl select,.ctrl input[type=number]{width:100%;margin-top:6px;background:#111318;color:#fff;border:1px solid #4a505b;border-radius:6px;padding:8px;min-height:38px}
+.check{display:flex!important;align-items:center;gap:8px}.check input{width:20px;height:20px}
+.layout{display:flex;flex-direction:column;gap:10px;padding:0 12px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}.panelHead{padding:10px 12px;background:var(--card2);font-weight:bold}
+#list{max-height:180px;overflow:auto}.item{padding:11px 12px;border-bottom:1px solid var(--line);cursor:pointer}.item.active{background:#243247}.item small{display:block;color:var(--muted);margin-top:3px}
+.viewer{padding:10px}.info{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px;margin-bottom:9px}.info div{background:var(--card2);padding:8px;border-radius:7px;overflow:hidden}.info b{display:block;font-size:9px;color:var(--muted);margin-bottom:3px}.info span{font-size:12px;word-break:break-all}
+.canvasWrap{background:#fff;border-radius:8px;min-height:240px;display:flex;justify-content:center;align-items:center;overflow:auto;padding:6px}
+canvas{display:block;max-width:100%;height:auto;image-rendering:auto}
+.status{margin-top:8px;color:var(--muted);font:11px monospace;white-space:pre-wrap;word-break:break-word}
+@media(min-width:700px){.layout{display:flex;flex-direction:column}.controls{grid-template-columns:repeat(3,1fr)}#list{max-height:260px}.topBtns{display:flex}.topBtns>*{flex:1}}
+.ytCorner{position:fixed;right:10px;top:8px;z-index:100;display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:4px 7px 4px 5px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.28)}.ytLogo{width:28px;height:20px;display:block}.ytText{color:#d00;font-weight:800;font-size:11px;letter-spacing:.2px}.ctrl .valRow{display:flex;align-items:center;justify-content:space-between;gap:6px}.ctrl .liveVal{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}.ctrl .numVal{width:58px!important;min-height:28px!important;padding:4px 5px!important;margin:0!important;text-align:center}@media(max-width:699px){header{padding-right:118px}.ytText{font-size:10px}.ytCorner{right:7px;top:6px}}
+/* ===== UI RAPi & MOBILE ===== */
+html,body{background:#0d0f12}
+body{padding-bottom:28px;overflow-x:hidden}
+header{position:relative;top:auto;z-index:10;padding:14px 14px 12px;background:linear-gradient(180deg,#111318 0%,#0f1014 100%);border-bottom:1px solid #292d35}
+header h1{font-size:22px;line-height:1.15;margin:0 112px 5px 0;letter-spacing:-.3px}
+header .sub{font-size:12px;line-height:1.35;max-width:650px}
+.ytCorner{position:absolute;right:12px;top:12px;z-index:20;min-height:42px;gap:6px;background:#fff;border:1px solid #cfd2d7;border-radius:12px;padding:6px 9px 6px 7px;box-shadow:0 3px 12px rgba(0,0,0,.35)}
+.ytLogo{width:34px;height:24px}.ytText{font-size:11px;font-weight:900}
+.topBtns{gap:9px;margin-top:13px}
+button,.fileBtn{min-height:48px;border-radius:11px;font-size:15px;padding:10px 11px;box-shadow:0 1px 0 rgba(255,255,255,.06) inset}
+.fileBtn{display:flex;align-items:center;justify-content:center;cursor:pointer}
+#drop{max-width:980px;margin:10px auto;padding:12px 14px;border:1px dashed #414753;border-radius:11px;background:#15171c;font-size:12px}
+details{max-width:980px;margin:11px auto 0;border-radius:12px;background:#191b20;box-shadow:0 2px 10px rgba(0,0,0,.14)}
+summary{padding:14px;font-size:16px;min-height:48px;display:flex;align-items:center}
+summary:after{margin-left:auto;float:none;font-size:22px}
+.controls{gap:8px;padding:0 10px 10px}
+.ctrl{padding:10px;border:1px solid rgba(255,255,255,.025);border-radius:9px}
+.ctrl .valRow{min-height:29px}
+.ctrl .numVal{width:56px!important;min-height:30px!important;background:#0f1115!important;border-color:#4c5360!important;font-weight:700}
+.ctrl .liveVal{min-width:25px;text-align:right}
+.ctrl input[type=range]{height:20px;margin-top:6px}
+.ctrl select,.ctrl input[type=number]{min-height:36px}
+.layout{max-width:980px;margin:10px auto 0;padding:0 10px;gap:10px}
+.panel{border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.16)}
+.panelHead{padding:12px 13px;font-size:14px}
+.viewer{padding:10px}
+.info{gap:7px;margin-bottom:10px}
+.info div{padding:9px 10px;min-height:58px;border:1px solid rgba(255,255,255,.025);border-radius:9px}
+.info b{font-size:9px;letter-spacing:.3px}.info span{font-size:13px}
+.canvasWrap{min-height:220px;padding:8px;border-radius:11px;border:1px solid #e2e2e2;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.filePanel{margin-top:0;order:2}.filePanel .panelHead{display:flex;align-items:center;justify-content:space-between}.filePanel #list{max-height:240px}.viewer{order:1}.detailPanel{order:3}.detailPanel .panelHead{display:flex;align-items:center;justify-content:space-between}
+.status{margin:9px 2px 2px;font-size:11px;line-height:1.3}
+@media(max-width:699px){
+  header{padding:12px 12px 11px}
+  header h1{font-size:20px;margin-right:116px}
+  header .sub{font-size:11px}
+  .ytCorner{right:10px;top:10px;min-height:40px;padding:5px 8px 5px 6px;border-radius:11px}
+  .ytLogo{width:31px;height:22px}.ytText{font-size:10px}
+  .topBtns{grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+  button,.fileBtn{min-height:46px;font-size:14px}
+  #drop{margin:9px 10px;padding:10px 12px}
+  details{margin:9px 10px 0}
+  summary{padding:13px;font-size:15px}
+  .layout{padding:0 10px;margin-top:9px}
+  .info{grid-template-columns:1fr 1fr}
+  .canvasWrap{min-height:190px}
+}
+@media(min-width:700px){
+  header{padding-left:max(14px,calc((100vw - 980px)/2 + 14px));padding-right:max(14px,calc((100vw - 980px)/2 + 14px))}
+  .ytCorner{right:max(14px,calc((100vw - 980px)/2 + 14px))}
+}
+</style>
+</head>
+<body><a class="ytCorner" href="https://youtube.com/@roygemink" target="_blank" rel="noopener noreferrer" aria-label="Subscribe YouTube"><svg class="ytLogo" viewBox="0 0 28 20"><rect x="0" y="1" width="28" height="18" rx="5" fill="#FF0000"/><path d="M11 5.5 21 10l-10 4.5z" fill="#fff"/></svg><span class="ytText">SUBSCRIBE</span></a>
+<header>
+  <h1>I3I / DDS Texture Viewer</h1>
+  <div class="sub">Point Blank • I3I / DDS • BMP 8-bit</div>
+  <div class="topBtns">
+    <label class="fileBtn">📂 Buka I3I / DDS
+      <input id="files" type="file" accept=".i3i,.dds" multiple>
+    </label>
+    <button id="reset" class="secondary">↻ Reset</button>
+    <button id="png" class="green">⬇ PNG</button>
+    <button id="bmp8" class="green">⬇ BMP 8-bit</button>
+    <button id="tga" class="green">⬇ TGA</button>
+  </div>
+  <details>
+    <summary>⚙ Pengaturan gambar</summary>
+    <div class="controls">
+      <label class="ctrl"><div class="valRow"><span>Brightness</span><input class="numVal" id="brightNum" type="number" min="70" max="250" value="115"><span class="liveVal" id="bv">115</span></div><input id="bright" type="range" min="70" max="250" value="115"></label>
+      <label class="ctrl"><div class="valRow"><span>Contrast</span><input class="numVal" id="contrastNum" type="number" min="40" max="180" value="125"><span class="liveVal" id="cv">125</span></div><input id="contrast" type="range" min="40" max="180" value="125"></label>
+      <label class="ctrl"><div class="valRow"><span>Gamma</span><input class="numVal" id="gammaNum" type="number" min="40" max="250" value="80"><span class="liveVal" id="gv">80</span></div><input id="gamma" type="range" min="40" max="250" value="80"></label>
+      <label class="ctrl"><div class="valRow"><span>Sharpness</span><input class="numVal" id="sharpNum" type="number" min="0" max="100" value="45"><span class="liveVal" id="sv">45</span></div><input id="sharp" type="range" min="0" max="100" value="45"></label>
+      <label class="ctrl"><div class="valRow"><span>HD Detail</span><input class="numVal" id="hdDetailNum" type="number" min="0" max="100" value="60"><span class="liveVal" id="hdv">60</span></div><input id="hdDetail" type="range" min="0" max="100" value="60"></label>
+      <label class="ctrl">HD Upscale<select id="hdScale"><option value="4" selected>4× HD (Disarankan)</option><option value="3">3× HD</option><option value="2">2× HD</option><option value="1">1× Original</option></select></label>
+      <label class="ctrl">Filter<select id="resizeFilter"><option value="bicubic">Bicubic Sharper</option><option value="bilinear">Bilinear</option><option value="nearest">Nearest</option></select></label>
+      <label class="ctrl">Palette<select id="paletteMode"><option value="adaptive">Adaptive 256</option><option value="websafe">Web-safe 256</option><option value="gray">Grayscale 256</option></select></label>
+      <label class="ctrl">Quantization<select id="quantization"><option value="histogram">Histogram / dominan</option><option value="uniform">Uniform 3-3-2</option></select></label>
+      <label class="ctrl">Dithering<select id="ditherMode"><option value="floyd">Floyd-Steinberg</option><option value="none">None</option></select></label>
+      <label class="ctrl">Rows<select id="rowDirection"><option value="bottom">Bottom-up</option><option value="top">Top-down</option></select></label>
+      <label class="ctrl">DPI<input id="bmpDpi" type="number" min="1" max="2400" value="72"></label>
+      <label class="ctrl">BMP Width<input id="bmpW" type="number" min="1" max="8192" placeholder="Kosong = asli"></label>
+      <label class="ctrl">BMP Height<input id="bmpH" type="number" min="1" max="8192" placeholder="Kosong = asli"></label>
+      <label class="ctrl">TGA Width<input id="tgaW" type="number" min="1" max="16384" placeholder="Kosong = otomatis"></label>
+      <label class="ctrl">TGA Height<input id="tgaH" type="number" min="1" max="16384" placeholder="Kosong = otomatis"></label>
+      <label class="ctrl">TGA Bit Depth<select id="tgaDepth"><option value="32" selected>32-bit RGBA</option><option value="24">24-bit RGB</option></select></label>
+      <label class="ctrl full check"><input id="tgaUseHD" type="checkbox" checked> Gunakan HD Upscale untuk ukuran TGA otomatis</label>
+      <label class="ctrl full check"><input id="useAlpha" type="checkbox"> Gunakan Alpha sebagai transparansi</label>
+      <input id="colorDepth" type="hidden" value="8">
+    </div>
+  </details>
+</header>
+<div id="drop">📱 Pilih file <b>.i3i</b> atau <b>.dds</b> di atas atau tarik file ke area ini.</div>
+<div class="layout">
+  <div class="panel viewer">
+    <div class="panelHead">🖼️ Preview</div>
+    <div class="canvasWrap"><canvas id="canvas"></canvas></div>
+  </div>
+
+  <div class="panel filePanel">
+    <div class="panelHead">📁 List File I3I / DDS</div>
+    <div id="list"></div>
+  </div>
+
+  <div class="panel detailPanel">
+    <div class="panelHead">📋 Detail File</div>
+    <div class="info">
+      <div><b>FILE</b><span id="name">-</span></div><div><b>FORMAT</b><span id="format">-</span></div>
+      <div><b>SIZE</b><span id="size">-</span></div><div><b>MIPMAP</b><span id="mip">-</span></div>
+      <div><b>PAYLOAD</b><span id="payload">-</span></div>
+    </div>
+    <div class="status" id="status">Belum ada file.</div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const state={files:[],current:-1,decoded:null,original:null};
+
+function u32(a,p){return (a[p]|(a[p+1]<<8)|(a[p+2]<<16)|(a[p+3]<<24))>>>0}
+function str(a,p,n){let s='';for(let i=0;i<n&&p+i<a.length;i++)s+=String.fromCharCode(a[p+i]);return s}
+function clamp(v){return v<0?0:v>255?255:v}
+
+function findI3IB(a){
+  // I3I Point Blank menggunakan signature I3IB pada awal file.
+  // Tetap scan seluruh buffer agar file yang mempunyai prefix tambahan
+  // juga dapat dibuka.
+  for(let i=0;i<=a.length-4;i++){
+    if(a[i]===0x49&&a[i+1]===0x33&&a[i+2]===0x49&&a[i+3]===0x42)return i;
+  }
+  return -1;
+}
+
+function calcMipSize(w,h,fmt){
+  const bw=Math.max(1,Math.ceil(w/4));
+  const bh=Math.max(1,Math.ceil(h/4));
+  return bw*bh*(fmt==='DXT1'?8:16);
+}
+
+function calcTextureSize(w,h,fmt,mips){
+  let total=0,ww=w,hh=h;
+  const count=Math.max(1,Math.min(32,mips|0));
+  for(let i=0;i<count;i++){
+    total+=calcMipSize(ww,hh,fmt);
+    if(ww===1&&hh===1)break;
+    ww=Math.max(1,ww>>1);
+    hh=Math.max(1,hh>>1);
+  }
+  return total;
+}
+
+function formatFromCode(code){
+  // Format code I3I: 1=Dxt1, 3=Dxt3, 5=Dxt5.
+  if(code===1)return 'DXT1';
+  if(code===3)return 'DXT3';
+  if(code===5)return 'DXT5';
+  return null;
+}
+
+function parseI3IHeader(a,off){
+  const headerEnd=off+60;
+  if(headerEnd>a.length)throw new Error('Header I3I tidak lengkap (kurang dari 60 byte)');
+
+  // Struktur header yang dipakai oleh I3IB:
+  // +04 format, +06 width, +08 height, +18 jumlah mipmap.
+  const formatCode=a[off+4];
+  const fmt=formatFromCode(formatCode);
+  const w=a[off+6]|(a[off+7]<<8);
+  const h=a[off+8]|(a[off+9]<<8);
+  const mips=u32(a,off+0x18);
+
+  if(!fmt)throw new Error(`Format I3I tidak didukung (code ${formatCode})`);
+  if(!w||!h||w>8192||h>8192)throw new Error(`Ukuran I3I tidak valid: ${w}×${h}`);
+  if(!mips||mips>32)throw new Error(`Jumlah mipmap tidak valid: ${mips}`);
+
+  let expected=calcTextureSize(w,h,fmt,mips);
+  const available=a.length-headerEnd;
+
+  // Beberapa I3I Point Blank mempunyai nilai format di header yang tidak
+  // cocok dengan ukuran payload aktual. Contoh: header menyebut DXT5,
+  // tetapi payload 256x256 + 4 mip berukuran tepat 43520 byte, yaitu DXT1.
+  // Jangan langsung gagal; cocokkan kembali ukuran payload dengan semua
+  // format DXT untuk dimensi/mipmap yang sudah terbaca dari header.
+  if(available<expected){
+    const alternatives=['DXT1','DXT3','DXT5'];
+    const exact=alternatives.find(f=>calcTextureSize(w,h,f,mips)===available);
+    if(exact){
+      return {fmt:exact,w,h,mips,headerEnd,expected:available,available,formatCode,headerFormat:fmt,formatMismatch:true};
+    }
+
+    // Bila file berisi beberapa texture/extra data, cari satu blok texture
+    // yang ukurannya tepat dan tetap gunakan metadata header untuk dimensi.
+    const matches=alternatives
+      .map(f=>({fmt:f,total:calcTextureSize(w,h,f,mips)}))
+      .filter(x=>x.total<=available);
+    if(matches.length){
+      // Prioritaskan format header bila bloknya masih muat.
+      const same=matches.find(x=>x.fmt===fmt);
+      const pick=same||matches.sort((a,b)=>b.total-a.total)[0];
+      return {fmt:pick.fmt,w,h,mips,headerEnd,expected:pick.total,available,formatCode,headerFormat:fmt,formatMismatch:pick.fmt!==fmt};
+    }
+
+    throw new Error(`Data texture kurang: perlu ${expected} byte (${fmt}), tersedia ${available} byte`);
+  }
+
+  return {fmt,w,h,mips,headerEnd,expected,available,formatCode,headerFormat:fmt,formatMismatch:false};
+}
+
+function detectFormatAndSize(payload,mips,header){
+  // Prioritaskan metadata header. Ini penting untuk I3I seperti Common_12.i3i:
+  // file dapat mempunyai data tambahan setelah texture utama, sehingga
+  // ukuran seluruh file tidak boleh dipakai untuk menebak dimensi.
+  if(header){
+    return {
+      fmt:header.fmt,
+      w:header.w,
+      h:header.h,
+      total:header.expected
+    };
+  }
+
+  // Fallback untuk varian I3I yang tidak mempunyai metadata format yang dikenal.
+  const candidates=['DXT1','DXT3','DXT5'];
+  for(const fmt of candidates){
+    for(let p=0;p<=13;p++){
+      const w=1<<p,h=w;
+      const total=calcTextureSize(w,h,fmt,mips||1);
+      if(total===payload)return {fmt,w,h,total};
+    }
+  }
+  return null;
+}
+
+function rgb565(c){
+  return [(c>>11&31)*255/31,(c>>5&63)*255/63,(c&31)*255/31];
+}
+function decodeDXT1(data,w,h){
+  const out=new Uint8ClampedArray(w*h*4),bw=Math.ceil(w/4),bh=Math.ceil(h/4);
+  for(let by=0;by<bh;by++)for(let bx=0;bx<bw;bx++){
+    const o=(by*bw+bx)*8;if(o+8>data.length)continue;
+    const c0=data[o]|data[o+1]<<8,c1=data[o+2]|data[o+3]<<8;
+    const a=rgb565(c0),b=rgb565(c1),pal=[a,b];
+    if(c0>c1)pal.push([(2*a[0]+b[0])/3,(2*a[1]+b[1])/3,(2*a[2]+b[2])/3],
+                       [(a[0]+2*b[0])/3,(a[1]+2*b[1])/3,(a[2]+2*b[2])/3]);
+    else pal.push([(a[0]+b[0])/2,(a[1]+b[1])/2,(a[2]+b[2])/2],[0,0,0]);
+    const bits=data[o+4]|data[o+5]<<8|data[o+6]<<16|data[o+7]<<24;
+    for(let py=0;py<4;py++)for(let px=0;px<4;px++){
+      const x=bx*4+px,y=by*4+py;if(x>=w||y>=h)continue;
+      const idx=(bits>>>(2*(py*4+px)))&3, q=(y*w+x)*4;
+      out[q]=pal[idx][0];out[q+1]=pal[idx][1];out[q+2]=pal[idx][2];out[q+3]=255;
+    }
+  } return out;
+}
+function decodeDXT3(data,w,h){
+  const out=new Uint8ClampedArray(w*h*4),bw=Math.ceil(w/4),bh=Math.ceil(h/4);
+  for(let by=0;by<bh;by++)for(let bx=0;bx<bw;bx++){
+    const o=(by*bw+bx)*16;if(o+16>data.length)continue;
+    const c0=data[o+8]|data[o+9]<<8,c1=data[o+10]|data[o+11]<<8;
+    const a=rgb565(c0),b=rgb565(c1),pal=[a,b,[(2*a[0]+b[0])/3,(2*a[1]+b[1])/3,(2*a[2]+b[2])/3],[(a[0]+2*b[0])/3,(a[1]+2*b[1])/3,(a[2]+2*b[2])/3]];
+    const bits=data[o+12]|data[o+13]<<8|data[o+14]<<16|data[o+15]<<24;
+    for(let py=0;py<4;py++)for(let px=0;px<4;px++){
+      const x=bx*4+px,y=by*4+py;if(x>=w||y>=h)continue;
+      const ci=(bits>>>(2*(py*4+px)))&3,q=(y*w+x)*4;
+      const ab=(py*4+px), av=((data[o+(ab>>1)]>>((ab&1)*4))&15)*17;
+      out[q]=pal[ci][0];out[q+1]=pal[ci][1];out[q+2]=pal[ci][2];out[q+3]=av;
+    }
+  } return out;
+}
+function decodeDXT5(data,w,h){
+  const out=new Uint8ClampedArray(w*h*4),bw=Math.ceil(w/4),bh=Math.ceil(h/4);
+  for(let by=0;by<bh;by++)for(let bx=0;bx<bw;bx++){
+    const o=(by*bw+bx)*16;if(o+16>data.length)continue;
+    const a0=data[o],a1=data[o+1],ab=data.subarray(o+2,o+8);
+    const ap=[a0,a1];
+    if(a0>a1)for(let i=1;i<=6;i++)ap.push(((7-i)*a0+i*a1)/7);
+    else{for(let i=1;i<=4;i++)ap.push(((5-i)*a0+i*a1)/5);ap.push(0,255)}
+    let abit=0n;for(let i=0;i<6;i++)abit|=BigInt(ab[i])<<(8n*BigInt(i));
+    const c0=data[o+8]|data[o+9]<<8,c1=data[o+10]|data[o+11]<<8;
+    const ca=rgb565(c0),cb=rgb565(c1),pal=[ca,cb,[(2*ca[0]+cb[0])/3,(2*ca[1]+cb[1])/3,(2*ca[2]+cb[2])/3],[(ca[0]+2*cb[0])/3,(ca[1]+2*cb[1])/3,(ca[2]+2*cb[2])/3]];
+    const cbits=(data[o+12]|data[o+13]<<8|data[o+14]<<16|data[o+15]<<24)>>>0;
+    for(let py=0;py<4;py++)for(let px=0;px<4;px++){
+      const x=bx*4+px,y=by*4+py;if(x>=w||y>=h)continue;
+      const n=py*4+px,ci=(cbits>>>(2*n))&3,ai=Number((abit>>BigInt(3*n))&7n),q=(y*w+x)*4;
+      out[q]=pal[ci][0];out[q+1]=pal[ci][1];out[q+2]=pal[ci][2];out[q+3]=ap[ai];
+    }
+  } return out;
+}
+
+function enhance(src){
+  const b=+$('bright').value/100,c=+$('contrast').value/100,g=+$('gamma').value/100;
+  const useA=$('useAlpha').checked, out=new Uint8ClampedArray(src);
+  for(let i=0;i<out.length;i+=4){
+    for(let k=0;k<3;k++){let v=out[i+k]/255;v=Math.pow(v,1/g);v*=b;v=(v-.5)*c+.5;out[i+k]=clamp(v*255)}
+    out[i+3]=useA?src[i+3]:255;
+  }
+  const sharp=(window.__livePreview?0:+$('sharp').value/100);
+  if(sharp>0){
+    const tmp=new Uint8ClampedArray(out),w=state.decoded?.w||1,h=state.decoded?.h||1;
+    for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){
+      const q=(y*w+x)*4;
+      for(let k=0;k<3;k++){
+        const avg=(tmp[q-4+k]+tmp[q+4+k]+tmp[q-w*4+k]+tmp[q+w*4+k])/4;
+        out[q+k]=clamp(tmp[q+k]+(tmp[q+k]-avg)*sharp);
+      }
+    }
+  }
+  return out;
+}
+
+let renderRAF=0, renderTimer=0, renderVersion=0;
+
+function drawPixelsToCanvas(pixels,w,h,targetW,targetH,quality='high'){
+  const src=document.createElement('canvas');
+  src.width=w; src.height=h;
+  const sctx=src.getContext('2d',{willReadFrequently:false});
+  const im=sctx.createImageData(w,h); im.data.set(pixels); sctx.putImageData(im,0,0);
+  const c=$('canvas'),ctx=c.getContext('2d',{alpha:false});
+  c.width=targetW; c.height=targetH;
+  ctx.imageSmoothingEnabled=targetW!==w || targetH!==h;
+  ctx.imageSmoothingQuality=quality;
+  ctx.clearRect(0,0,targetW,targetH);
+  ctx.drawImage(src,0,0,targetW,targetH);
+}
+
+function renderNow(full=true){
+  if(!state.original)return;
+  const d=state.original, scale=Number($('hdScale').value)||1;
+  // Saat slider digeser, jangan melakukan upscale+sharpen jutaan piksel pada setiap event.
+  // Full-quality hanya dijalankan setelah pengguna berhenti sebentar.
+  const workScale=full?scale:1;
+  state.decoded={w:d.w,h:d.h};
+  let px=enhance(d.pixels);
+  let w=d.w,h=d.h;
+  if(workScale>1){
+    w=Math.min(4096,d.w*workScale); h=Math.min(4096,d.h*workScale);
+    drawPixelsToCanvas(px,d.w,d.h,w,h,'high');
+    state.decoded={w,h};
+    if(full && Number($('hdDetail').value)>0){
+      // Sharpen hanya sekali setelah upscale selesai. Dibuat dari ImageData canvas agar
+      // slider tetap ringan; tidak mengulang resize custom bicubic di setiap event.
+      const ctx=$('canvas').getContext('2d',{willReadFrequently:true});
+      const cur=ctx.getImageData(0,0,w,h);
+      const sh=detailSharpen(cur.data,w,h,Number($('hdDetail').value)||0);
+      cur.data.set(sh); ctx.putImageData(cur,0,0);
+    }
+  }else{
+    drawPixelsToCanvas(px,w,h,w,h,'high');
+  }
+  $('bright').nextElementSibling.textContent=$('bright').value;
+  $('contrast').nextElementSibling.textContent=$('contrast').value;
+  $('gamma').nextElementSibling.textContent=$('gamma').value;
+  $('sharp').nextElementSibling.textContent=$('sharp').value;
+}
+
+function scheduleRender(full=true){
+  cancelAnimationFrame(renderRAF);
+  if(renderTimer)clearTimeout(renderTimer);
+  // Live preview: hanya enhancement pada resolusi asli, sangat ringan di HP.
+  renderRAF=requestAnimationFrame(()=>{window.__livePreview=true;renderNow(false);window.__livePreview=false;});
+  if(full){
+    const token=++renderVersion;
+    renderTimer=setTimeout(()=>{ if(token===renderVersion) renderNow(true); },220);
+  }
+}
+
+function render(){ scheduleRender(true); }
+
+function fourCC(a,p){return String.fromCharCode(a[p],a[p+1],a[p+2],a[p+3]);}
+
+function decodeDDSUncompressed(a,dataOff,w,h,bpp,pfFlags,rMask,gMask,bMask,aMask){
+  const out=new Uint8ClampedArray(w*h*4);
+  const bytesPerPixel=bpp>>3;
+  if(bytesPerPixel!==4 && bytesPerPixel!==3) throw new Error(`DDS uncompressed ${bpp}-bit belum didukung`);
+  const need=w*h*bytesPerPixel;
+  if(dataOff+need>a.length) throw new Error(`Payload DDS kurang: perlu ${need} byte, tersedia ${Math.max(0,a.length-dataOff)} byte`);
+  const maskShift=(mask)=>{ if(!mask)return {shift:0,bits:0}; let shift=0,m=mask>>>0; while((m&1)===0){shift++;m>>>=1;} let bits=0;while(m&1){bits++;m>>>=1;}return {shift,bits}; };
+  const rs=maskShift(rMask),gs=maskShift(gMask),bs=maskShift(bMask),as=maskShift(aMask);
+  const extract=(v,info,def)=>info.bits?Math.round((((v>>>info.shift)&((1<<info.bits)-1))*255)/((1<<info.bits)-1)):def;
+  for(let i=0;i<w*h;i++){
+    const p=dataOff+i*bytesPerPixel;
+    let v;
+    if(bytesPerPixel===4) v=(a[p]|a[p+1]<<8|a[p+2]<<16|a[p+3]<<24)>>>0;
+    else v=(a[p]|a[p+1]<<8|a[p+2]<<16)>>>0;
+    const q=i*4;
+    out[q]=extract(v,rs,bytesPerPixel===4?a[p+2]:a[p+2]);
+    out[q+1]=extract(v,gs,bytesPerPixel===4?a[p+1]:a[p+1]);
+    out[q+2]=extract(v,bs,bytesPerPixel===4?a[p]:a[p]);
+    out[q+3]=bytesPerPixel===4?(as.bits?extract(v,as,255):255):255;
+  }
+  return out;
+}
+
+function ddsMipChainSize(w,h,fmt,mips){
+  let total=0, ww=w, hh=h;
+  const count=Math.max(1,Math.min(32,mips|0));
+  for(let i=0;i<count;i++){
+    total += calcMipSize(ww,hh,fmt);
+    if(ww===1 && hh===1) break;
+    ww=Math.max(1,ww>>1); hh=Math.max(1,hh>>1);
+  }
+  return total;
+}
+
+function inferCompressedDDSFormat(w,h,mips,available,headerFmt){
+  const candidates=['DXT1','DXT3','DXT5'];
+  const fullMatches=[];
+  const topExact=[];
+  for(const fmt of candidates){
+    const full=ddsMipChainSize(w,h,fmt,mips);
+    const top=calcMipSize(w,h,fmt);
+    if(available===full) fullMatches.push({fmt,total:full,reason:'exact-mip-chain'});
+    if(available===top) topExact.push({fmt,total:top,reason:'exact-mip0'});
+  }
+  // Strongest evidence: exact complete mip chain, then exact mip-0 size.
+  if(fullMatches.length) return fullMatches.find(x=>x.fmt===headerFmt) || fullMatches[0];
+  if(topExact.length) return topExact.find(x=>x.fmt===headerFmt) || topExact[0];
+
+  // If the header itself names a compressed format and mip-0 fits, keep it.
+  if(headerFmt && available>=calcMipSize(w,h,headerFmt)){
+    return {fmt:headerFmt,total:calcMipSize(w,h,headerFmt),reason:'header-mip0'};
+  }
+
+  // Last-resort recovery for game files carrying a stale 24/32-bit DDS header.
+  // BC3/DXT5 is the most common alpha-bearing variant in these Point Blank assets;
+  // use it when its mip-0 fits, otherwise fall back to DXT1/DXT3 by size.
+  const dxt5Top=calcMipSize(w,h,'DXT5');
+  if(available>=dxt5Top) return {fmt:'DXT5',total:dxt5Top,reason:'fallback-dxt5'};
+  const dxt3Top=calcMipSize(w,h,'DXT3');
+  if(available>=dxt3Top) return {fmt:'DXT3',total:dxt3Top,reason:'fallback-dxt3'};
+  const dxt1Top=calcMipSize(w,h,'DXT1');
+  if(available>=dxt1Top) return {fmt:'DXT1',total:dxt1Top,reason:'fallback-dxt1'};
+  return null;
+}
+
+function parseDDS(a){
+  if(a.length<128 || str(a,0,4)!=='DDS ') throw new Error('Bukan file DDS yang valid');
+  const headerSize=u32(a,4); if(headerSize!==124) throw new Error(`Header DDS tidak valid (${headerSize})`);
+  const h=u32(a,12), w=u32(a,16), mips=Math.max(1,u32(a,28));
+  if(!w||!h||w>16384||h>16384) throw new Error(`Ukuran DDS tidak valid: ${w}×${h}`);
+  const pfSize=u32(a,76); if(pfSize!==32) throw new Error('Pixel format DDS tidak valid');
+  const pfFlags=u32(a,80), cc=fourCC(a,84);
+  let dataOff=128,fmt=null,uncompressed=null,headerFmt=null,dx10=false;
+
+  if(cc==='DXT1'){ fmt='DXT1'; headerFmt=fmt; }
+  else if(cc==='DXT3'){ fmt='DXT3'; headerFmt=fmt; }
+  else if(cc==='DXT5'){ fmt='DXT5'; headerFmt=fmt; }
+  else if(cc==='DX10'){
+    if(a.length<148) throw new Error('Header DDS DX10 tidak lengkap');
+    const dxgi=u32(a,128); dataOff=148; dx10=true;
+    if(dxgi===71||dxgi===72)fmt='DXT1';
+    else if(dxgi===74||dxgi===75)fmt='DXT3';
+    else if(dxgi===77||dxgi===78)fmt='DXT5';
+    else throw new Error(`DDS DX10 DXGI format ${dxgi} belum didukung`);
+    headerFmt=fmt;
+  }else if(cc==='\\0\\0\\0\\0' || !cc.trim()){
+    const bpp=u32(a,88),rMask=u32(a,92),gMask=u32(a,96),bMask=u32(a,100),aMask=u32(a,104);
+    if(bpp===32 || bpp===24) uncompressed={bpp,pfFlags,rMask,gMask,bMask,aMask};
+    else throw new Error(`DDS pixel format ${bpp}-bit belum didukung`);
+  }else throw new Error(`DDS FourCC ${cc} belum didukung (gunakan DXT1/DXT3/DXT5)`);
+
+  const available=Math.max(0,a.length-dataOff);
+  const originalHeaderFmt=headerFmt || (uncompressed ? `${uncompressed.bpp}-bit` : fmt);
+
+  // Normal DDS: decode mip-0 only. For damaged/non-standard Point Blank DDS,
+  // recover when the header's declared format does not match the actual payload.
+  if(uncompressed){
+    const need=w*h*(uncompressed.bpp>>3);
+    if(available>=need){
+      const pixels=decodeDDSUncompressed(a,dataOff,w,h,uncompressed.bpp,uncompressed.pfFlags,uncompressed.rMask,uncompressed.gMask,uncompressed.bMask,uncompressed.aMask);
+      return {fmt:`${uncompressed.bpp}-bit`,headerFmt:originalHeaderFmt,w,h,mips,dataOff,total:need,pixels,extraBytes:available-need,dx10,fourCC:cc,recovered:false};
+    }
+    // Some game DDS files retain an old 32-bit header while the payload is DXT.
+    // Try DXT recovery before reporting "payload kurang".
+    const rec=inferCompressedDDSFormat(w,h,mips,available,null);
+    if(rec){
+      const tex=a.subarray(dataOff,dataOff+rec.total);
+      const pixels=rec.fmt==='DXT5'?decodeDXT5(tex,w,h):rec.fmt==='DXT3'?decodeDXT3(tex,w,h):decodeDXT1(tex,w,h);
+      return {fmt:rec.fmt,headerFmt:originalHeaderFmt,w,h,mips,dataOff,total:rec.total,pixels,extraBytes:Math.max(0,available-rec.total),dx10,fourCC:cc,recovered:true,recoveryReason:rec.reason};
+    }
+    throw new Error(`Payload DDS kurang: perlu ${need} byte, tersedia ${available} byte`);
+  }
+
+  const expectedTop=calcMipSize(w,h,fmt);
+  if(available>=expectedTop){
+    const tex=a.subarray(dataOff,dataOff+expectedTop);
+    const pixels=fmt==='DXT5'?decodeDXT5(tex,w,h):fmt==='DXT3'?decodeDXT3(tex,w,h):decodeDXT1(tex,w,h);
+    return {fmt,headerFmt:originalHeaderFmt,w,h,mips,dataOff,total:expectedTop,pixels,extraBytes:Math.max(0,available-expectedTop),dx10,fourCC:cc,recovered:false};
+  }
+
+  // Critical recovery for the files shown in the screenshot:
+  // 256×256 + 4 mip DXT5 normally needs 87,040 bytes, while some game files
+  // contain exactly 43,520 bytes — which is the complete DXT1 chain. In that
+  // case the old viewer incorrectly threw an error or decoded DXT1 bytes as DXT5.
+  const rec=inferCompressedDDSFormat(w,h,mips,available,fmt);
+  if(rec){
+    const tex=a.subarray(dataOff,dataOff+rec.total);
+    const pixels=rec.fmt==='DXT5'?decodeDXT5(tex,w,h):rec.fmt==='DXT3'?decodeDXT3(tex,w,h):decodeDXT1(tex,w,h);
+    return {fmt:rec.fmt,headerFmt:originalHeaderFmt,w,h,mips,dataOff,total:rec.total,pixels,extraBytes:Math.max(0,available-rec.total),dx10,fourCC:cc,recovered:rec.fmt!==fmt,recoveryReason:rec.reason};
+  }
+
+  throw new Error(`Payload DDS kurang: perlu ${expectedTop} byte (${fmt}), tersedia ${available} byte`);
+}
+
+async function openFile(file,index){
+  const buf=await file.arrayBuffer();
+  const a=new Uint8Array(buf);
+  const isDDS=/\.dds$/i.test(file.name) || str(a,0,4)==='DDS ';
+  if(isDDS){
+    const d=parseDDS(a);
+    state.files[index]={file,bytes:a,off:0,mips:d.mips,info:{fmt:d.fmt,w:d.w,h:d.h,formatCode:'DDS',headerFormat:d.headerFmt||d.fmt,total:d.total,recovered:!!d.recovered},pixels:d.pixels,headerSize:d.dataOff,textureBytes:d.total,extraBytes:d.extraBytes,container:'DDS',recovered:!!d.recovered,recoveryReason:d.recoveryReason||''};
+    return;
+  }
+  const off=findI3IB(a);
+  if(off<0)throw new Error('Signature I3IB tidak ditemukan');
+  const header=parseI3IHeader(a,off);
+  const info=detectFormatAndSize(header.available,header.mips,header);
+  if(!info)throw new Error('Format/ukuran texture tidak dapat dikenali');
+  const tex=a.subarray(header.headerEnd,header.headerEnd+info.total);
+  if(tex.length<info.total)throw new Error('Payload texture tidak lengkap');
+  let pixels;
+  if(info.fmt==='DXT5')pixels=decodeDXT5(tex,info.w,info.h);
+  else if(info.fmt==='DXT3')pixels=decodeDXT3(tex,info.w,info.h);
+  else pixels=decodeDXT1(tex,info.w,info.h);
+  state.files[index]={file,bytes:a,off,mips:header.mips,info,pixels,headerSize:60,textureBytes:info.total,extraBytes:Math.max(0,header.available-info.total),container:'I3I'};
+}
+
+function select(index){
+  state.current=index;
+  document.querySelectorAll('.item').forEach((e,i)=>e.classList.toggle('active',i===index));
+  const f=state.files[index];if(!f)return;
+  $('name').textContent=f.file.name;
+  $('format').textContent=f.info.fmt;
+  $('size').textContent=f.info.w+' × '+f.info.h;
+  $('mip').textContent=f.mips||1;
+  $('payload').textContent=f.textureBytes;
+  state.original={w:f.info.w,h:f.info.h,pixels:f.pixels};
+  if(f.container==='DDS'){
+    $('status').textContent=`DDS header   : ${f.headerSize} bytes\nTexture data : 0x${f.headerSize.toString(16).toUpperCase()}\nFormat       : ${f.info.fmt}${f.info.headerFormat&&f.info.headerFormat!==f.info.fmt?' (header '+f.info.headerFormat+')':''}\nMipmaps      : ${f.mips||1}\nTexture size : ${f.textureBytes} bytes\nExtra data   : ${f.extraBytes} bytes (mipmap/data tambahan)${f.recovered?'\nRecovery    : format payload disesuaikan dengan ukuran data':''}\nAlpha        : ${$('useAlpha').checked?'AKTIF':'DIABAIKAN (preview solid)'}`;
+  }else{
+    $('status').textContent=`I3IB offset : 0x${f.off.toString(16).toUpperCase()}\nHeader       : ${f.headerSize} bytes\nTexture data : 0x${(f.off+f.headerSize).toString(16).toUpperCase()}\nFormat code  : ${f.info.formatCode} (${f.info.headerFormat||f.info.fmt})\nFormat pakai : ${f.info.fmt}${f.info.formatMismatch?' (disesuaikan dari payload)':''}\nMipmaps      : ${f.mips||1}\nTexture size : ${f.textureBytes} bytes\nExtra data   : ${f.extraBytes} bytes (diabaikan)\nAlpha        : ${$('useAlpha').checked?'AKTIF':'DIABAIKAN (preview solid)'}`;
+  }
+  render();
+}
+
+function addFiles(files){
+  const arr=[...files].filter(f=>/\.(i3i|dds)$/i.test(f.name));
+  if(!arr.length){$('status').textContent='Pilih file .i3i atau .dds';return}
+
+  Promise.all(arr.map(async(file)=>{
+    const index=state.files.length;
+    state.files.push({file,loading:true});
+    try{
+      await openFile(file,index);
+    }catch(e){
+      state.files[index].error=(e&&e.message)?e.message:String(e);
+    }finally{
+      state.files[index].loading=false;
+    }
+  })).then(()=>{
+    renderList();
+    const first=state.files.findIndex(x=>x.info&&!x.error);
+    if(first>=0 && (state.current<0 || !state.files[state.current]?.info))select(first);
+  });
+}
+
+function renderList(){
+  $('list').innerHTML='';
+  state.files.forEach((f,i)=>{
+    const d=document.createElement('div');d.className='item';
+    d.innerHTML=`<b>${f.file.name}</b><small>${f.loading?'MEMBACA...':(f.error?'ERROR: '+f.error:(f.info.fmt+' • '+f.info.w+'×'+f.info.h+' • mip '+(f.mips||1)+(f.container==='DDS'?' • DDS':'')+(f.recovered?' • recovered':'')))}</small>`;
+    d.onclick=()=>!f.error&&select(i);
+    $('list').appendChild(d);
+  });
+}
+
+
+function getRenderedPixels(){
+  return state.original ? enhance(state.original.pixels) : null;
+}
+function makePalette(pixels,mode,q){
+  const pal=[];
+  if(mode==='gray'){for(let i=0;i<256;i++)pal.push([i,i,i]);return pal;}
+  if(mode==='websafe'){
+    const v=[0,51,102,153,204,255];
+    for(const r of v)for(const g of v)for(const b of v)pal.push([r,g,b]);
+    while(pal.length<256)pal.push([0,0,0]); return pal.slice(0,256);
+  }
+  if(q==='uniform'){
+    for(let r=0;r<8;r++)for(let g=0;g<8;g++)for(let b=0;b<4;b++)pal.push([r*255/7,g*255/7,b*255/3]);
+    return pal;
+  }
+  const hist=new Map();
+  for(let i=0;i<pixels.length;i+=4){
+    const r=pixels[i]>>3,g=pixels[i+1]>>3,b=pixels[i+2]>>3,k=(r<<10)|(g<<5)|b;
+    hist.set(k,(hist.get(k)||0)+1);
+  }
+  for(const [k] of [...hist.entries()].sort((a,b)=>b[1]-a[1]).slice(0,256))
+    pal.push([((k>>10)&31)*255/31,((k>>5)&31)*255/31,(k&31)*255/31]);
+  while(pal.length<256)pal.push([0,0,0]);
+  return pal.slice(0,256);
+}
+function nearestColor(r,g,b,pal){
+  let bi=0,bd=Infinity;
+  for(let i=0;i<pal.length;i++){const dr=r-pal[i][0],dg=g-pal[i][1],db=b-pal[i][2],d=dr*dr+dg*dg+db*db;if(d<bd){bd=d;bi=i;}}
+  return bi;
+}
+function makeIndexedPixels(pixels,w,h,pal,dither){
+  const idx=new Uint8Array(w*h);
+  if(!dither){for(let y=0;y<h;y++)for(let x=0;x<w;x++){const p=(y*w+x)*4;idx[y*w+x]=nearestColor(pixels[p],pixels[p+1],pixels[p+2],pal);}return idx;}
+  const er=new Float32Array(w*h*3);
+  const add=(x,y,k,v)=>{if(x>=0&&x<w&&y>=0&&y<h)er[(y*w+x)*3+k]+=v;};
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){
+    const p=(y*w+x)*4,e=(y*w+x)*3,r=clamp(pixels[p]+er[e]),g=clamp(pixels[p+1]+er[e+1]),b=clamp(pixels[p+2]+er[e+2]),pi=nearestColor(r,g,b,pal);
+    idx[y*w+x]=pi;const q=pal[pi],a=r-q[0],c=g-q[1],d=b-q[2];
+    add(x+1,y,0,a*7/16);add(x+1,y,1,c*7/16);add(x+1,y,2,d*7/16);
+    add(x-1,y+1,0,a*3/16);add(x-1,y+1,1,c*3/16);add(x-1,y+1,2,d*3/16);
+    add(x,y+1,0,a*5/16);add(x,y+1,1,c*5/16);add(x,y+1,2,d*5/16);
+    add(x+1,y+1,0,a/16);add(x+1,y+1,1,c/16);add(x+1,y+1,2,d/16);
+  }
+  return idx;
+}
+function cubic(t){
+  const a=-0.5,at=Math.abs(t);
+  if(at<=1)return (a+2)*at*at*at-(a+3)*at*at+1;
+  if(at<2)return a*at*at*at-5*a*at*at+8*a*at-4*a;
+  return 0;
+}
+function resizePixels(src,sw,sh,dw,dh,mode){
+  if(sw===dw&&sh===dh)return src;
+  const o=new Uint8ClampedArray(dw*dh*4);
+  if(mode==='nearest'){for(let y=0;y<dh;y++){const sy=Math.min(sh-1,Math.floor(y*sh/dh));for(let x=0;x<dw;x++){const sx=Math.min(sw-1,Math.floor(x*sw/dw)),a=(sy*sw+sx)*4,b=(y*dw+x)*4;o[b]=src[a];o[b+1]=src[a+1];o[b+2]=src[a+2];o[b+3]=255;}}return o;}
+  for(let y=0;y<dh;y++){
+    const fy=(y+.5)*sh/dh-.5, y0=Math.floor(fy), ty=fy-y0;
+    for(let x=0;x<dw;x++){
+      const fx=(x+.5)*sw/dw-.5, x0=Math.floor(fx), tx=fx-x0, b=(y*dw+x)*4;
+      if(mode==='bilinear'){
+        const x1=Math.max(0,Math.min(sw-1,x0)),x2=Math.max(0,Math.min(sw-1,x0+1)),y1=Math.max(0,Math.min(sh-1,y0)),y2=Math.max(0,Math.min(sh-1,y0+1));
+        for(let k=0;k<3;k++){const p11=src[(y1*sw+x1)*4+k],p21=src[(y1*sw+x2)*4+k],p12=src[(y2*sw+x1)*4+k],p22=src[(y2*sw+x2)*4+k];o[b+k]=Math.round(p11+(p21-p11)*tx+(p12-p11)*ty+(p11-p21-p12+p22)*tx*ty);}o[b+3]=255;
+      }else{
+        for(let k=0;k<3;k++){let sum=0,ws=0;for(let j=-1;j<=2;j++){const yy=Math.max(0,Math.min(sh-1,y0+j)),wy=cubic(j-ty);for(let i=-1;i<=2;i++){const xx=Math.max(0,Math.min(sw-1,x0+i)),w=wy*cubic(i-tx);sum+=src[(yy*sw+xx)*4+k]*w;ws+=w;}}o[b+k]=clamp(sum/(ws||1));}o[b+3]=255;
+      }
+    }
+  }
+  return o;
+}
+function detailSharpen(src,w,h,amount){
+  if(!amount)return src; const out=new Uint8ClampedArray(src),tmp=new Uint8ClampedArray(src),a=amount/100;
+  for(let y=1;y<h-1;y++)for(let x=1;x<w-1;x++){const q=(y*w+x)*4;for(let k=0;k<3;k++){const avg=(tmp[q-4+k]+tmp[q+4+k]+tmp[q-w*4+k]+tmp[q+w*4+k]+tmp[q-w*4-4+k]+tmp[q-w*4+4+k]+tmp[q+w*4-4+k]+tmp[q+w*4+4+k])/8;out[q+k]=clamp(tmp[q+k]+(tmp[q+k]-avg)*a*1.35);}}
+  return out;
+}
+function exportBMP8(){
+  if(state.current<0||!state.original){alert('Pilih I3I atau DDS terlebih dahulu.');return;}
+  const sw=state.original.w,sh=state.original.h;let pix=getRenderedPixels();
+  let w=parseInt($('bmpW').value),h=parseInt($('bmpH').value);
+  const scale=Number($('hdScale').value)||1;
+  if(!w)w=Math.round(sw*scale); if(!h)h=Math.round(sh*scale);
+  w=Math.max(1,Math.min(8192,w));h=Math.max(1,Math.min(8192,h));
+  pix=resizePixels(pix,sw,sh,w,h,$('resizeFilter').value);
+  pix=detailSharpen(pix,w,h,Number($('hdDetail').value)||0);
+  const pal=makePalette(pix,$('paletteMode').value,$('quantization').value);
+  const ix=makeIndexedPixels(pix,w,h,pal,$('ditherMode').value==='floyd');
+  const row=Math.ceil(w/4)*4,pixelBytes=row*h,offset=14+40+1024,size=offset+pixelBytes;
+  const buf=new ArrayBuffer(size),dv=new DataView(buf),u=new Uint8Array(buf);let p=0;
+  u[p++]=0x42;u[p++]=0x4D;dv.setUint32(p,size,true);p+=4;dv.setUint16(p,0,true);p+=2;dv.setUint16(p,0,true);p+=2;dv.setUint32(p,offset,true);p+=4;
+  dv.setUint32(p,40,true);p+=4;const top=$('rowDirection').value==='top';dv.setInt32(p,w,true);p+=4;dv.setInt32(p,top?-h:h,true);p+=4;
+  dv.setUint16(p,1,true);p+=2;dv.setUint16(p,8,true);p+=2;dv.setUint32(p,0,true);p+=4;dv.setUint32(p,pixelBytes,true);p+=4;
+  const dpi=Number($('bmpDpi').value)||72,ppm=Math.round(dpi*39.37007874015748);dv.setInt32(p,ppm,true);p+=4;dv.setInt32(p,ppm,true);p+=4;dv.setUint32(p,256,true);p+=4;dv.setUint32(p,256,true);p+=4;
+  for(let i=0;i<256;i++){const c=pal[i];u[p++]=Math.round(c[2]);u[p++]=Math.round(c[1]);u[p++]=Math.round(c[0]);u[p++]=0;}
+  const ys=top?[...Array(h).keys()]:[...Array(h).keys()].reverse();
+  for(const y of ys){const s=p;for(let x=0;x<w;x++)u[p++]=ix[y*w+x];while(p-s<row)u[p++]=0;}
+  const blob=new Blob([buf],{type:'image/bmp'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=state.files[state.current].file.name.replace(/\.(i3i|dds)$/i,'')+'_8bit.bmp';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+
+function resizePixelsKeepAlpha(src,sw,sh,dw,dh,mode){
+  if(sw===dw&&sh===dh)return new Uint8ClampedArray(src);
+  const sc=document.createElement('canvas');sc.width=sw;sc.height=sh;
+  const sctx=sc.getContext('2d',{willReadFrequently:true});
+  const im=sctx.createImageData(sw,sh);im.data.set(src);sctx.putImageData(im,0,0);
+  const dc=document.createElement('canvas');dc.width=dw;dc.height=dh;
+  const dctx=dc.getContext('2d',{willReadFrequently:true});
+  dctx.imageSmoothingEnabled=mode!=='nearest';
+  dctx.imageSmoothingQuality=mode==='bilinear'?'medium':'high';
+  dctx.drawImage(sc,0,0,dw,dh);
+  return new Uint8ClampedArray(dctx.getImageData(0,0,dw,dh).data);
+}
+function exportTGA(){
+  if(state.current<0||!state.original){alert('Pilih file I3I atau DDS terlebih dahulu.');return;}
+  try{
+    const sw=state.original.w,sh=state.original.h;
+    let pix=getRenderedPixels();
+    const hdToggle=$('tgaUseHD'); const scale=Number((hdToggle && hdToggle.checked)?$('hdScale').value:1)||1;
+    let w=parseInt($('tgaW').value,10),h=parseInt($('tgaH').value,10);
+    if(!w&&!h){w=Math.round(sw*scale);h=Math.round(sh*scale);}
+    else if(!w)w=Math.max(1,Math.round(h*sw/sh));
+    else if(!h)h=Math.max(1,Math.round(w*sh/sw));
+    w=Math.max(1,Math.min(8192,w));h=Math.max(1,Math.min(8192,h));
+    if(w*h>30000000)throw new Error('Ukuran terlalu besar. Maksimum total 30 juta piksel.');
+    pix=resizePixelsKeepAlpha(pix,sw,sh,w,h,$('resizeFilter').value);
+    pix=detailSharpen(pix,w,h,Number($('hdDetail').value)||0);
+    const depth=Number($('tgaDepth').value),bpp=depth/8,bytes=w*h*bpp;
+    const buf=new ArrayBuffer(18+bytes),u=new Uint8Array(buf),dv=new DataView(buf);
+    // TGA true-color, uncompressed; origin top-left.
+    u[2]=2;dv.setUint16(12,w,true);dv.setUint16(14,h,true);u[16]=depth;u[17]=0x20|(depth===32?8:0);
+    let p=18;
+    for(let i=0;i<w*h;i++){
+      const q=i*4;
+      u[p++]=pix[q+2];u[p++]=pix[q+1];u[p++]=pix[q];
+      if(depth===32)u[p++]= $('useAlpha').checked ? pix[q+3] : 255;
+    }
+    const blob=new Blob([buf],{type:'image/x-tga'}),a=document.createElement('a');
+    const base=state.files[state.current].file.name.replace(/\.(i3i|dds)$/i,'');
+    a.href=URL.createObjectURL(blob);a.download=`${base}_${w}x${h}_${depth}bit.tga`;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1500);
+    $('status').textContent+=`\\nTGA diekspor: ${w}×${h}, ${depth}-bit, ${(bytes/1024).toFixed(1)} KiB`;
+  }catch(e){alert('Gagal ekspor TGA: '+(e.message||e));}
+}
+
+function syncValue(id,source){const el=$(id),num=$(id+'Num'),out=$(id==='bright'?'bv':id==='contrast'?'cv':id==='gamma'?'gv':id==='sharp'?'sv':'hdv');let v=Math.round(+(source==='num'?num.value:el.value));v=Math.max(+el.min,Math.min(+el.max,v));el.value=v;num.value=v;out.textContent=v}
+function manualInput(id){const el=$(id),num=$(id+'Num'),out=$(id==='bright'?'bv':id==='contrast'?'cv':id==='gamma'?'gv':id==='sharp'?'sv':'hdv');if(num.value==='')return;const v=Number(num.value);if(!Number.isFinite(v))return;out.textContent=Math.round(v);if(v>=+el.min&&v<=+el.max){el.value=Math.round(v);scheduleRender(true)}}
+function manualCommit(id){const el=$(id),num=$(id+'Num');let v=Math.round(Number(num.value));if(!Number.isFinite(v))v=+el.value;v=Math.max(+el.min,Math.min(+el.max,v));el.value=v;num.value=v;syncValue(id,'range');scheduleRender(true)}
+['bright','contrast','gamma','sharp','hdDetail'].forEach(id=>{ $(id).addEventListener('input',()=>{syncValue(id,'range');scheduleRender(true)}); $(id+'Num').addEventListener('input',()=>manualInput(id)); $(id+'Num').addEventListener('change',()=>manualCommit(id)); $(id+'Num').addEventListener('blur',()=>manualCommit(id)); });
+function syncAllValues(){['bright','contrast','gamma','sharp','hdDetail'].forEach(id=>syncValue(id,'range'))}syncAllValues();
+$('files').onchange=e=>addFiles(e.target.files);
+$('bmp8').onclick=exportBMP8;
+$('tga').onclick=exportTGA;
+['useAlpha'].forEach(id=>$(id).addEventListener('input',()=>scheduleRender(true)));
+['hdScale','resizeFilter'].forEach(id=>$(id).addEventListener('change',()=>renderNow(true)));
+$('reset').onclick=()=>{$('bright').value=115;$('contrast').value=125;$('gamma').value=80;$('sharp').value=45;$('useAlpha').checked=false;$('paletteMode').value='adaptive';$('rowDirection').value='bottom';$('quantization').value='histogram';$('ditherMode').value='floyd';$('bmpW').value='';$('bmpH').value='';$('tgaW').value='';$('tgaH').value='';$('tgaDepth').value='32';if($('tgaUseHD'))$('tgaUseHD').checked=true;$('bmpDpi').value=72;$('hdScale').value='4';$('resizeFilter').value='bicubic';$('hdDetail').value=60;syncAllValues();render()};
+$('png').onclick=()=>{
+  if(state.current<0)return;
+  const c=$('canvas');const a=document.createElement('a');
+  a.href=c.toDataURL('image/png');a.download=state.files[state.current].file.name.replace(/\.(i3i|dds)$/i,'')+'_preview.png';a.click();
+};
+$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('drag')};
+$('drop').ondragleave=()=>$('drop').classList.remove('drag');
+$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('drag');addFiles(e.dataTransfer.files)};
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
+</script>
+</body>
+</html>
