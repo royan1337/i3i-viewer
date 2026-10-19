@@ -37,7 +37,7 @@ canvas{display:block;max-width:100%;height:auto;image-rendering:auto;user-select
 .status{margin-top:8px;color:var(--muted);font:11px monospace;white-space:pre-wrap;word-break:break-word}
 @media(min-width:700px){.layout{display:flex;flex-direction:column}.controls{grid-template-columns:repeat(3,1fr)}#list{max-height:260px}.topBtns{display:flex}.topBtns>*{flex:1}}
 .ytCorner{position:fixed;right:10px;top:8px;z-index:100;display:flex;align-items:center;gap:6px;background:#fff;border:1px solid #ddd;border-radius:8px;padding:4px 7px 4px 5px;text-decoration:none;box-shadow:0 2px 8px rgba(0,0,0,.28)}.ytLogo{width:28px;height:20px;display:block}.ytText{color:#d00;font-weight:800;font-size:11px;letter-spacing:.2px}.ctrl .valRow{display:flex;align-items:center;justify-content:space-between;gap:6px}.ctrl .liveVal{font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}.ctrl .numVal{width:58px!important;min-height:28px!important;padding:4px 5px!important;margin:0!important;text-align:center}@media(max-width:699px){header{padding-right:118px}.ytText{font-size:10px}.ytCorner{right:7px;top:6px}}
-/* ===== UI RAPi & MOBILE ===== */
+/* ===== UI MOBILE ===== */
 html,body{background:#0d0f12}
 body{padding-bottom:28px;overflow-x:hidden}
 header{position:relative;top:auto;z-index:10;padding:14px 14px 12px;background:linear-gradient(180deg,#111318 0%,#0f1014 100%);border-bottom:1px solid #292d35}
@@ -126,7 +126,7 @@ summary:after{margin-left:auto;float:none;font-size:22px}
       <label class="ctrl">TGA Bit Depth<select id="tgaDepth"><option value="32" selected>32-bit RGBA</option><option value="24">24-bit RGB</option></select></label>
       <label class="ctrl full check"><input id="tgaUseHD" type="checkbox" checked> Gunakan HD Upscale untuk ukuran TGA otomatis</label>
       <label class="ctrl full check"><input id="useAlpha" type="checkbox"> Gunakan Alpha asli sebagai transparansi</label>
-      <label class="ctrl full check"><input id="autoMirror" type="checkbox"> 🪞 Cermin otomatis ala Frame Merger</label><div class="ctrl full" style="font-size:11px;color:#bfc5d0;line-height:1.4">Mode Mirror : gambar sumber utuh berada di kiri, salinan cermin horizontal utuh di kanan. Lebar hasil menjadi 2× agar tekstur tidak terpotong; garis tengah hanya panduan pratinjau.</div>
+      <label class="ctrl full check"><input id="autoMirror" type="checkbox"> 🪞 Mirror otomatis </label><div class="ctrl full" style="font-size:11px;color:#bfc5d0;line-height:1.4">Mode Mirror : gambar sumber utuh berada di kiri, salinan cermin horizontal utuh di kanan. Lebar hasil menjadi 2× agar tekstur tidak terpotong; garis tengah hanya panduan pratinjau.</div>
       <input id="colorDepth" type="hidden" value="8">
     </div>
   </details>
